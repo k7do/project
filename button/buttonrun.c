@@ -15,3 +15,21 @@
 #define HAVE_TO_FIND_1 "N: Name=\"ecube-button\"\n"
 #define HAVE_TO_FIND_2 "H: Handlers=kbd event"
 
+int main(int argc, char *argv[])
+{
+    buttonInit();
+    int msgQueue = msgget(MESSAGE_ID, IPC_CREAT | 0666);
+    if (msgQueue == -1)
+    {
+        printf ("Cannot get msgQueueID, Return!\r\n");
+        return -1;
+    }
+    BUTTON_MSG_T rxMsg;
+    while (1)
+    {
+        int returnValue;
+        returnValue = msgrcv(msgQueue, &rxMsg, sizeof(BUTTON_MSG_T), 0, 0);
+        printf("message number: %ld, key input: %d, key pressed?: %d\r\n", rxMsg.messageNum, rxMsg.keyInput, rxMsg.pressed);
+    }         
+    return 0;
+}

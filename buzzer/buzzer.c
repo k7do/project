@@ -44,4 +44,55 @@ int buzzerInit()
 }
 int buzzerPlaySong(int scale)
 {
-    
+     //buzzerEnable(1);
+    //setFrequency(scale);
+    if ( scale > MAX_SCALE_STEP )
+    {
+        printf(" <buzzerNo> over range \n");
+        doHelp();
+        return 1;
+    }
+    else
+    {
+        setFrequency(musicScale[scale-1]);
+        buzzerEnable(1);
+    }
+
+}
+int buzzerStopSong(void)
+{
+    buzzerEnable(0);
+}
+int buzzerExit(void)
+{
+    buzzerEnable(0);
+    //close(dir_info);
+}
+
+void buzzerEnable(int bEnable)
+{
+    char path[200];
+    sprintf(path,"%s%s",gBuzzerBaseSysDir,BUZZER_ENABLE_NAME);
+    int fd=open(path,O_WRONLY);
+    if ( bEnable) write(fd, &"1", 1);
+    else write(fd, &"0", 1);
+    close(fd);
+}
+
+void setFrequency(int frequency)
+{
+    char path[200];
+    sprintf(path,"%s%s",gBuzzerBaseSysDir,BUZZER_FREQUENCY_NAME);
+    int fd=open(path,O_WRONLY);
+    dprintf(fd, "%d", frequency);
+    close(fd);
+}
+
+void doHelp(void)
+{
+    printf("Usage:\n");
+    printf("buzzertest <buzzerNo> \n");
+    printf("buzzerNo: \n");
+    printf("do(1),re(2),mi(3),fa(4),sol(5),ra(6),si(7),do(8) \n");
+    printf("off(0)\n");
+}
