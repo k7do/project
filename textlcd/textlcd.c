@@ -8,10 +8,10 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "textlcd.h"
 
 #define LINE_NUM			2
 #define COLUMN_NUM			16	
+
 
 #define  LINE_BUFF_NUM 	(COLUMN_NUM + 4)  // for dummy 
 
@@ -40,6 +40,7 @@
 #define  CMD_TEST_GPIO_LOW			0x31
 #define TEXTLCD_DRIVER_NAME		"/dev/peritextlcd"
 
+#include "textlcd.h"
 static int fd;
 static int len; 
 stTextLCD  stlcd; 
