@@ -95,6 +95,7 @@ int fndmode(int argc, char**argv)
 	{
 		fndDisp(number , 0);
 	}
+
 	else if(mode == MODE_TIME_DIS )
 	{
 		struct tm *ptmcur;
@@ -107,16 +108,17 @@ int fndmode(int argc, char**argv)
 		number += ptmcur->tm_sec;
 		fndDisp(number , 0b1010);
 	}
+
 	else if (mode == MODE_COUNT_DIS)
 	{
-		counter = 0;
+		counter = number;
 		while(1)
 		{
 			if (!fndDisp(counter , 0))
 				break;
-			counter++;
+			counter--;
 			sleep(1);
-			if (counter > number )
+			if (counter <= 0 )
 				break;
 		}
 	}

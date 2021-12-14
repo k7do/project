@@ -8,25 +8,23 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+
 #define LED_DRIVER_NAME "/dev/periled"
 #include "led.h"
 
-static int fd = 0;
-int ledLibInit(void);
-int ledOn(int ledNum);
-int ledLibExit(void);
-
-int ledOn(int ledNum)
+int ledOn(int fd, int ledNum)
 {
     write (fd, &ledNum, 4);
 }
 
-int ledLibInit(void)
+int ledInit(void)
 {
+    int fd;
     fd=open(LED_DRIVER_NAME, O_WRONLY);
+    return fd;
 }
 
-int ledLibExit(void)
+int ledExit(int fd)
 {
     close(fd);
 }
