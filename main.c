@@ -18,12 +18,19 @@
 
 int main(int argc , char **argv)
 {
+    system("insmod ../buttondrv.ko");
+    system("insmod ../buzzerdrv.ko");
+    system("insmod ../fnddrv.ko");
+    system("insmod ../leddrv.ko");
+    system("insmod ../textlcddrv.ko");
+
     int ledFd, buzzerFd, buzzerEnableFd;
     BUTTON_MSG_T rxMsg;
+    pthread_t buttonTh_id;
 
     ledFd = ledInit();
     buzzerFd = buzzerInit(&buzzerEnableFd);
-    buttonInit();
+    buttonInit(&buttonTh_id);
     pwmLedInit();
 
     pwmSetPercentRGB(0,0);
@@ -36,7 +43,15 @@ int main(int argc , char **argv)
         printf ("Cannot get msgQueueID, Return!\r\n");
         return -1;
     }
-    
+
+    while (1)
+    {
+        int returnValue = 0;
+        returnValue = msgrcv(msgQueue, &rxMsg, sizeof(BUTTON_MSG_T), 0, IPC_NOWAIT);
+        if (returnValue == -1)
+            break; //There is no message at all
+    }
+
     while (1)
     {
         int returnValue;
@@ -69,10 +84,22 @@ int main(int argc , char **argv)
                 pwmSetPercentRGB(0,2);
                 break;
         }
-    }         
+
+        if(rxMsg.keyInput == 114 && rxMsg.pressed == 0)
+        {
+            pthread_exit(NULL);
+        }
+    }        
 
     ledExit(ledFd);
     buzzerExit(buzzerEnableFd, buzzerFd);
+
+    system("rmmod ../buttondrv.ko");
+    system("rmmod ../buzzerdrv.ko");
+    system("rmmod ../fnddrv.ko");
+    system("rmmod ../leddrv.ko");
+    system("rmmod ../textlcddrv.ko");
+
     return 0;
 }
 

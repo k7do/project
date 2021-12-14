@@ -24,7 +24,6 @@ char inputDevPath[200] = {
     0,
 };
 int msgID;
-pthread_t buttonTh_id;
 pthread_mutex_t lock;
 
 void *buttonThFunc(void *arg)
@@ -45,8 +44,11 @@ void *buttonThFunc(void *arg)
         {
             txMsg.keyInput = stEvent.code;
             txMsg.pressed = stEvent.value;
-
             msgsnd(msgID, &txMsg, sizeof(BUTTON_MSG_T), 0);
+            if(txMsg.keyInput == 114 && txMsg.pressed == 0)
+            {
+                break;
+            }
         }
         //msgsnd(msgQueue, &messageTxData, sizeof(messageTxData.piggyBack), 0);
     }
@@ -58,8 +60,9 @@ void *buttonThFunc(void *arg)
     return NULL;
 }
 
-int buttonInit(void) // 작성 할 것
+int buttonInit(pthread_t* buttonTh_id) // 작성 할 것
 {
+
     if (probeButtonPath(inputDevPath) == 0)
     {
         printf("ERROR! File Not Found!\r\n");
@@ -87,14 +90,14 @@ int buttonInit(void) // 작성 할 것
         return 1;
     }
 
-    pthread_create(&buttonTh_id, NULL, &buttonThFunc, NULL);
-
+    pthread_create(buttonTh_id, NULL, &buttonThFunc, NULL);
+    
     return 1;
 }
 
 int buttonExit(void)
 {
-    close(fd);
+    
 }
 
 int probeButtonPath(char *newPath)
