@@ -5,14 +5,6 @@
 #include <string.h>
 #include "colorled.h"
 
-void doHelp(void)
-{
-	printf("Usage:Color LED\n");
-	printf("colorledrun  red green blue\n");
-	printf("color range 0 ~ 100\n");
-	printf("ex) colorledrun  100 100 100 =>white color, all full on\n");
-}
-
 int pwmActiveAll(void)
 {
     int fd = 0;

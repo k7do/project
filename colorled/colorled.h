@@ -16,7 +16,6 @@
 #define PWM_COLOR_B 2
 #define PWM_PERIOD_NS 1000000 //ns. = 1ms = 1khz
 
-void doHelp(void);
 int pwmActiveAll(void);
 int pwmInactiveAll(void);
 int pwmSetDuty(int dutyCycle, int pwmIndex);
