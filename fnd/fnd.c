@@ -16,7 +16,7 @@
 #define MODE_TIME_DIS		1
 #define MODE_COUNT_DIS		2
 
-static	int mode ;
+static	int mode, fndonoff=1;
 static	int number,counter;
 /*
 void doHelp(void)
@@ -45,6 +45,11 @@ int fndmode(char fndchar, int fndnumber)
 		//doHelp();
 		return 1;
 	}*/
+	if(!fndonoff)
+	{
+		fndOff();
+		return 0;
+	}
 
 	if( fndchar == 's') //if ( argv[1][0] == 's'  )
 	{
