@@ -75,7 +75,7 @@ int main(int argc , char **argv)
         returnValue = msgrcv(msgQueue, &rxMsg, sizeof(BUTTON_MSG_T), 0, 0);
         printf("key input: %d, key pressed?: %d\r\n", rxMsg.keyInput, rxMsg.pressed);
 
-        switch(rxMsg.keyInput)//버튼 값: 102=reset, 158=timer, 217buzzertoggle, 139ledtoggle, 115fndtoggle, 114textlcdtoggle
+        switch(rxMsg.keyInput)//버튼 값: 102=reset, 158=timer, 217=buzzertoggle, 139=ledtoggle, 115=fndtoggle, 114=textlcdtoggle
         {
             case 102: //리셋
                 fndmode(s, 0); //fndmode(char mode, int fndnumber)
