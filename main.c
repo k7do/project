@@ -31,8 +31,7 @@ int main(int argc , char **argv)
     system("insmod ../fnddrv.ko");
     system("insmod ../leddrv.ko");
     system("insmod ../textlcddrv.ko");
-    system("insmod ../fnddrv.ko");
-    system("insmod ../textlcddrv.ko");
+    system("insmod ../colorleddrv.ko");
 
     //사용 변수 선언
     int ledFd, buzzerFd, buzzerEnableFd;
