@@ -41,7 +41,7 @@
 #define TEXTLCD_DRIVER_NAME		"/dev/peritextlcd"
 
 #include "textlcd.h"
-static int fd;
+static int textlcdfd;
 static int len; 
 stTextLCD  stlcd; 
 
@@ -57,17 +57,17 @@ void doHelp(void)
 int textlcdinit(void)
 {
 // open  driver 
-	fd = open(TEXTLCD_DRIVER_NAME,O_RDWR);
-	if ( fd < 0 )
+	textlcdfd = open(TEXTLCD_DRIVER_NAME,O_RDWR);
+	if ( textlcdfd < 0 )
 	{
 		perror("driver (//dev//peritextlcd) open error.\n");
 		return 1;
 	}
-    return 0;
+    return textlcdfd;
 }
 void textlcdexit()
 {
-	close(fd);
+	close(textlcdfd);
 }
 
 //int textlcdmode(int argc , char **argv)
@@ -111,6 +111,6 @@ int textlcdmode(unsigned int linenumber , char string[])
 		memcpy(stlcd.TextData[stlcd.cmdData - 1],string,len);
 	}
 	stlcd.cmd = CMD_WRITE_STRING;
-    write(fd,&stlcd,sizeof(stTextLCD));
+    write(textlcdfd,&stlcd,sizeof(stTextLCD));
 	return 0;
 }
