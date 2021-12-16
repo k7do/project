@@ -17,6 +17,7 @@
 #include "buzzer.h"
 #include "colorled.h"
 #include "fnd.h"    
+#include "textlcd.h"
 
 
 int main(int argc , char **argv)
@@ -28,6 +29,7 @@ int main(int argc , char **argv)
     system("insmod ../leddrv.ko");
     system("insmod ../textlcddrv.ko");
     system("insmod ../fnddrv.ko");
+    system("insmod ../textlcddrv.ko");
 
     //사용 변수 선언
     int ledFd, buzzerFd, buzzerEnableFd;
@@ -39,6 +41,7 @@ int main(int argc , char **argv)
     buzzerFd = buzzerInit(&buzzerEnableFd);
     buttonInit(&buttonTh_id);
     pwmLedInit();
+    textlcdinit();
 
     //RGB percent 0으로 보여주고 50퍼센트로 보여주기
     pwmSetPercentRGB(0,0);
@@ -72,28 +75,31 @@ int main(int argc , char **argv)
         {
             case 102: 
                 fndmode(s, 102); //fndmode(char mode, int fndnumber)
+                textlcdmode(1, "case102")// textlcd 첫번째 라인에 case102표기
                 ledOn(ledFd, 0xFF);
                 pwmSetPercentRGB(0,0);
                 pwmSetPercentRGB(50,1);
                 pwmSetPercentRGB(50,2);
                 buzzerPlaySong(buzzerFd, buzzerEnableFd, 1);
-                for(int i=0;i<0xFFFFFF;i++)//버저 플레이 시간 증가
+                for(int i=0;i<0x7FFFFF;i++)//버저 플레이 시간 증가
                 {}
                 break;
 
             case 158: 
                 fndmode(s, 158);
+                textlcdmode(1, "case158")// textlcd 첫번째 라인에 case158표기
                 ledOn(ledFd, 0x0F);
                 pwmSetPercentRGB(50,0);
                 pwmSetPercentRGB(0,1);
                 pwmSetPercentRGB(50,2);
                 buzzerPlaySong(buzzerFd, buzzerEnableFd, 8);
-                for(int i=0;i<0xFFFFFF;i++)//버저 플레이 시간 증가
+                for(int i=0;i<0x7FFFFF;i++)//버저 플레이 시간 증가
                 {}
                 break;
 
             default:
                 fndmode(s, 0);
+                textlcdmode(1, "case_default")
                 ledOn(ledFd, 0x00);
                 write(buzzerEnableFd, &"0", 1);
                 pwmSetPercentRGB(0,0);
@@ -112,6 +118,7 @@ int main(int argc , char **argv)
     ledExit(ledFd);
     buzzerExit(buzzerEnableFd, buzzerFd);
     fndOff();
+    textlcdexit();
     //각 적재형 드라이버 제거
     system("rmmod ../buttondrv.ko");
     system("rmmod ../buzzerdrv.ko");
