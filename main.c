@@ -19,7 +19,9 @@
 #include "fnd.h"    
 #include "textlcd.h"
 
-static int timertoggle =0;
+static unsigned int timertoggle =0, timercount=0; //timertoggle: 타이머 모드 설정변수, timercount: 모드에 해당하는 초 설정
+static unsigned int buzzertoggle=1, ledtoggle=1, fndtoggle=1, textlcdtoggle=1;//각 디바이스를 on/off하기 위한 변수로, 남은 버튼이 4개이기 때문에 led colorled를 통합, 기본은 1:on, 0:off
+
 
 int main(int argc , char **argv)
 {
@@ -72,7 +74,7 @@ int main(int argc , char **argv)
         returnValue = msgrcv(msgQueue, &rxMsg, sizeof(BUTTON_MSG_T), 0, 0);
         printf("key input: %d, key pressed?: %d\r\n", rxMsg.keyInput, rxMsg.pressed);
 
-        switch(rxMsg.keyInput)//버튼 값: 102=reset, 158=timer, 217, 139, 115, 114
+        switch(rxMsg.keyInput)//버튼 값: 102=reset, 158=timer, 217buzzertoggle, 139ledtoggle, 115fndtoggle, 114textlcdtoggle
         {
             case 102: //리셋
                 fndmode(s, 0); //fndmode(char mode, int fndnumber)
@@ -92,33 +94,95 @@ int main(int argc , char **argv)
                 switch(timertoggle){
                     case 0://timer 30s
                         textlcdmode(2, "30 sec");
-                        fndmode(c, 30);
-                        timertoggle++;
+                        timercount=30;//추후 사용할때fndmode(c, 30);로 아마도 스레드 미사용시 카운트만 하는걸로 예상
+                        timertoggle++;//모드 순차적 변경
+                        ledOn(ledFd, 0x11);//의미없는 타이머모드 시간 차별성
                         break;
                     case 1://timer 60s
                         textlcdmode(2, "60 sec");
-                        fndmode(c, 60); 
-                        timertoggle++;
+                        timercount=60;//추후 사용할때fndmode(c, 60);로 아마도 스레드 미사용시 카운트만 하는걸로 예상
+                        timertoggle++;//모드 순차적 변경
+                        ledOn(ledFd, 0x12);//의미없는 타이머모드 시간 차별성
                         break;
                     default://timer 120s
                         textlcdmode(2, "120 sec");
-                        fndmode(c, 120);
-                        timertoggle=0;
+                        timercount=120;//추후 사용할때fndmode(c, 120);로 아마도 스레드 미사용시 카운트만 하는걸로 예상
+                        timertoggle=0;//모드 순차적 변경
+                        ledOn(ledFd, 0x13);//의미없는 타이머모드 시간 차별성
                         break;
                 }
-                ledOn(ledFd, 0x0F);
                 pwmSetPercentRGB(50,0);
                 pwmSetPercentRGB(0,1);
                 pwmSetPercentRGB(50,2);
-                buzzerPlaySong(buzzerFd, buzzerEnableFd, 8);
+                buzzerPlaySong(buzzerFd, buzzerEnableFd, 2);
+                for(int i=0;i<0x100000;i++)//버저 플레이 시간 증가
+                {}
+                break;
+
+            case 217: //버저 onoff
+                textlcdmode(1, "BUZZER_ON/OFF");
+                textlcdmode(2,"        ");
+                ledOn(ledFd, 0x00);//ledOn(ledFd, 0xFF);
+                if(buzzertoggle==1) //기본상태=on:1 으로 실행되어서 버저를 끄는 함수
+                {
+                    textlcdmode(2,"  OFF   ");
+                    buzzertoggle=0;// 반대로 끈다
+                    
+                    buzzerInit(0);
+                    //아예 exit하면 토클할때 또 스레드 생성하면 할 것 같은데 아예 토글할때 플레이하는 주소를 바꿔버리도
+                    //작동안하지 않을까 해서 넣어봤어요 반대로 작동하는 토글로 넘어가면 변수에 알맞게 다시 바꾸면 가능하지 않을까해요
+                    //이 코드가 아니라면 바꿔주세요..
+                }
+                else{
+                    textlcdmode(2,"  ON    ");
+                    buzzertoggle=1;//buzzer on
+                    buzzerInit(&buzzerEnableFd);
+                    for(int buzzerpoweron = 1; buzzerpoweron < 9; buzzerpoweron++)
+                    {
+                        buzzerPlaySong(buzzerFd, buzzerEnableFd, 1); //on상태인지 확인?
+                        for(int i=0;i<0x100000;i++)//버저 플레이 시간 증가
+                            {}
+                    }
+                }
+                break;
+
+            case 139: //led on/off
+                textlcdmode(1, "LED_ON/OFF");
+                textlcdmode(2,"        ");// textlcd 첫번째 라인에 reset표기
+                /*
+                    led onoff code
+                */
+                pwmSetPercentRGB(0,0);
+                pwmSetPercentRGB(0,1);//pwmSetPercentRGB(50,1);
+                pwmSetPercentRGB(0,2);//pwmSetPercentRGB(50,2);
+                buzzerPlaySong(buzzerFd, buzzerEnableFd, 1);
                 for(int i=0;i<0x1FFFFF;i++)//버저 플레이 시간 증가
                 {}
                 break;
 
-            default:
-                fndmode(s, 0);
-                textlcdmode(1, "case_default"); textlcdmode(2,"        ");
-                ledOn(ledFd, 0x00);
+            case 115: //fnd on/off
+                textlcdmode(1, "FND_ON/OFF");
+                textlcdmode(2,"        ");// textlcd 첫번째 라인에 reset표기
+                //ledOn(ledFd, 0xFF);
+                /*
+                    onoff code
+                */
+                pwmSetPercentRGB(0,0);
+                pwmSetPercentRGB(0,1);//pwmSetPercentRGB(50,1);
+                pwmSetPercentRGB(0,2);//pwmSetPercentRGB(50,2);
+                buzzerPlaySong(buzzerFd, buzzerEnableFd, 1);
+                for(int i=0;i<0x1FFFFF;i++)//버저 플레이 시간 증가
+                {}
+                break;
+
+
+            default: //114값 해당, textlcd on/off
+                textlcdmode(1, "FND_ON/OFF");
+                textlcdmode(2,"        ");
+                //ledOn(ledFd, 0x00);
+                 /*
+                    onoff code
+                */
                 write(buzzerEnableFd, &"0", 1);
                 pwmSetPercentRGB(0,0);
                 pwmSetPercentRGB(0,1);
