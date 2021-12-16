@@ -95,7 +95,7 @@ int main(int argc , char **argv)
                 switch(timertoggle){
                     case 0://timer 30s
                         textlcdmode(2, "30 sec");
-                        timercount=30;//추후 사용할때fndmode(c, 30);로 아마도 스레드 미사용시 카운트만 하는걸로 예상
+                        timercount=30;//추후 사용할때fndmode(c, timercount);로 아마도 스레드 미사용시 카운트만 하는걸로 예상
                         timertoggle++;//모드 순차적 변경
                         ledOn(ledFd, 0x11);//의미없는 타이머모드 시간 차별성
                         pwmSetPercentRGB(30,0);
@@ -104,7 +104,7 @@ int main(int argc , char **argv)
                         break;
                     case 1://timer 60s
                         textlcdmode(2, "60 sec");
-                        timercount=60;//추후 사용할때fndmode(c, 60);로 아마도 스레드 미사용시 카운트만 하는걸로 예상
+                        timercount=60;//추후 사용할때fndmode(c, timercount);로 아마도 스레드 미사용시 카운트만 하는걸로 예상
                         timertoggle++;//모드 순차적 변경
                         ledOn(ledFd, 0x12);//의미없는 타이머모드 시간 차별성
                         pwmSetPercentRGB(60,0);
@@ -113,7 +113,7 @@ int main(int argc , char **argv)
                         break;
                     default://timer 120s
                         textlcdmode(2, "120 sec");
-                        timercount=120;//추후 사용할때fndmode(c, 120);로 아마도 스레드 미사용시 카운트만 하는걸로 예상
+                        timercount=120;//추후 사용할때fndmode(c,timercount);로 아마도 스레드 미사용시 카운트만 하는걸로 예상
                         timertoggle=0;//모드 순차적 변경
                         ledOn(ledFd, 0x13);//의미없는 타이머모드 시간 차별성
                         pwmSetPercentRGB(90,0);
@@ -134,7 +134,7 @@ int main(int argc , char **argv)
                 {
                     textlcdmode(2,"  OFF   ");
                     buzzertoggle=0;// 반대로 끈다
-                    write(buzzerEnableFd, &"0", 1); //buzzerInit(0);
+                    write(buzzerEnableFd, &"0", 1); //buzzerInit(0)?
                     pwmSetPercentRGB(0,0);
                     pwmSetPercentRGB(0,1);
                     pwmSetPercentRGB(0,2);
@@ -145,7 +145,7 @@ int main(int argc , char **argv)
                     buzzerInit(&buzzerEnableFd);
                     for(int buzzerpoweron = 1; buzzerpoweron < 9; buzzerpoweron++)
                     {
-                        buzzerPlaySong(buzzerFd, buzzerEnableFd, 1); //on상태인지 확인?
+                        buzzerPlaySong(buzzerFd, buzzerEnableFd, buzzerpoweron); //on상태인지 확인?
                         for(int i=0;i<0x100000;i++)//버저 플레이 시간 증가
                             {}
                     }
@@ -170,13 +170,13 @@ int main(int argc , char **argv)
                 else//led,colorled off->on
                 {
                     ledtoggle =1;
-                    pwmActiveAll();
                     ledFd = ledFd_temp;
+                    pwmActiveAll();
                     pwmSetPercentRGB(50,0);
                     pwmSetPercentRGB(50,1);
                     pwmSetPercentRGB(50,2);
                 }
-                buzzerPlaySong(buzzerFd, buzzerEnableFd, 1);
+                buzzerPlaySong(buzzerFd, buzzerEnableFd,3);
                 for(int i=0;i<0x1FFFFF;i++)//버저 플레이 시간 증가
                 {}
                 break;
@@ -200,7 +200,7 @@ int main(int argc , char **argv)
                     pwmSetPercentRGB(50,1);
                     pwmSetPercentRGB(50,2);
                 }
-                buzzerPlaySong(buzzerFd, buzzerEnableFd, 1);
+                buzzerPlaySong(buzzerFd, buzzerEnableFd, 4);
                 for(int i=0;i<0x1FFFFF;i++)//버저 플레이 시간 증가
                 {}
                 break;
@@ -226,7 +226,7 @@ int main(int argc , char **argv)
                     pwmSetPercentRGB(50,1);
                     pwmSetPercentRGB(50,2);
                 }
-                //
+                buzzerPlaySong(buzzerFd, buzzerEnableFd, 5);
                 break;
         }
 
