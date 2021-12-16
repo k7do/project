@@ -45,13 +45,14 @@ static int fd;
 static int len; 
 stTextLCD  stlcd; 
 
+/*
 void doHelp(void)
 {
 	printf("usage: textlcdtest <linenum> <'string'>\n");
 	printf("       linenum => 1 ~ 2\n");	
 	printf("  ex) textlcdtest 2 'test hello'\n");
 	
-}
+}*/
 
 int textlcdinit(void)
 {
@@ -69,44 +70,45 @@ void textlcdexit()
 	close(fd);
 }
 
-int textlcdmode(int argc , char **argv)
+//int textlcdmode(int argc , char **argv)
+int textlcdmode(unsigned int linenumber , char string[])
 {
-	unsigned int linenum = 0;
+	//unsigned int linenum = 0;
 	
 	memset(&stlcd,0,sizeof(stTextLCD));
-	
+	/*
 	if (argc < 3 )
 	{
 		perror(" Args number is less than 2\n");
 		doHelp();
 		return 1;
-	}
+	}*/
 	
-	linenum = strtol(argv[1],NULL,10);
-	printf("linenum :%d\n", linenum);
+	//작성할 라인 넘버 입력linenum = strtol(argv[1],NULL,10);
+	//printf("linenum :%d\n", linenum);
 	
-	if ( linenum == 1) // firsst line
+	if ( linenumber == 1) // firsst line
 	{
 		stlcd.cmdData = CMD_DATA_WRITE_LINE_1;
 	}
-	else if ( linenum == 2) // second line
+	else if ( linenumber == 2) // second line
 	{
 		stlcd.cmdData = CMD_DATA_WRITE_LINE_2;
 	}
 	else 
 	{
-		printf("linenum : %d  wrong .  range (1 ~ 2)\n", linenum);
+		printf("linenumber : %d  wrong .  range (1 ~ 2)\n", linenumber);
 		return 1; 
 	}
-	printf("string:%s\n",argv[2]);
-	len = strlen(argv[2]);
+	printf("string:%s\n",string);
+	len = strlen(string);
 	if ( len > COLUMN_NUM)
 	{
-		memcpy(stlcd.TextData[stlcd.cmdData - 1],argv[2],COLUMN_NUM);
+		memcpy(stlcd.TextData[stlcd.cmdData - 1],string,COLUMN_NUM);
 	}
 	else
 	{
-		memcpy(stlcd.TextData[stlcd.cmdData - 1],argv[2],len);
+		memcpy(stlcd.TextData[stlcd.cmdData - 1],string,len);
 	}
 	stlcd.cmd = CMD_WRITE_STRING;
     write(fd,&stlcd,sizeof(stTextLCD));
