@@ -71,7 +71,7 @@ int main(int argc , char **argv)
         returnValue = msgrcv(msgQueue, &rxMsg, sizeof(BUTTON_MSG_T), 0, 0);
         printf("key input: %d, key pressed?: %d\r\n", rxMsg.keyInput, rxMsg.pressed);
 
-        switch(rxMsg.keyInput)
+        switch(rxMsg.keyInput)//버튼 값: 102, 158, 217, 139, 115, 114
         {
             case 102: 
                 fndmode(s, 102); //fndmode(char mode, int fndnumber)
@@ -81,7 +81,7 @@ int main(int argc , char **argv)
                 pwmSetPercentRGB(50,1);
                 pwmSetPercentRGB(50,2);
                 buzzerPlaySong(buzzerFd, buzzerEnableFd, 1);
-                for(int i=0;i<0x7FFFFF;i++)//버저 플레이 시간 증가
+                for(int i=0;i<0x1FFFFF;i++)//버저 플레이 시간 증가
                 {}
                 break;
 
@@ -93,7 +93,7 @@ int main(int argc , char **argv)
                 pwmSetPercentRGB(0,1);
                 pwmSetPercentRGB(50,2);
                 buzzerPlaySong(buzzerFd, buzzerEnableFd, 8);
-                for(int i=0;i<0x7FFFFF;i++)//버저 플레이 시간 증가
+                for(int i=0;i<0x1FFFFF;i++)//버저 플레이 시간 증가
                 {}
                 break;
 
