@@ -19,6 +19,7 @@
 #include "fnd.h"    
 #include "textlcd.h"
 
+static int timertoggle =0;
 
 int main(int argc , char **argv)
 {
@@ -71,23 +72,40 @@ int main(int argc , char **argv)
         returnValue = msgrcv(msgQueue, &rxMsg, sizeof(BUTTON_MSG_T), 0, 0);
         printf("key input: %d, key pressed?: %d\r\n", rxMsg.keyInput, rxMsg.pressed);
 
-        switch(rxMsg.keyInput)//버튼 값: 102, 158, 217, 139, 115, 114
+        switch(rxMsg.keyInput)//버튼 값: 102=reset, 158=timer, 217, 139, 115, 114
         {
-            case 102: 
-                fndmode(s, 102); //fndmode(char mode, int fndnumber)
-                textlcdmode(1, "case102")// textlcd 첫번째 라인에 case102표기
-                ledOn(ledFd, 0xFF);
+            case 102: //리셋
+                fndmode(s, 0); //fndmode(char mode, int fndnumber)
+                textlcdmode(1, "RESET");
+                textlcdmode(2,"        ");// textlcd 첫번째 라인에 reset표기
+                ledOn(ledFd, 0x00);//ledOn(ledFd, 0xFF);
                 pwmSetPercentRGB(0,0);
-                pwmSetPercentRGB(50,1);
-                pwmSetPercentRGB(50,2);
+                pwmSetPercentRGB(0,1);//pwmSetPercentRGB(50,1);
+                pwmSetPercentRGB(0,2);//pwmSetPercentRGB(50,2);
                 buzzerPlaySong(buzzerFd, buzzerEnableFd, 1);
                 for(int i=0;i<0x1FFFFF;i++)//버저 플레이 시간 증가
                 {}
                 break;
 
-            case 158: 
-                fndmode(s, 158);
-                textlcdmode(1, "case158")// textlcd 첫번째 라인에 case158표기
+            case 158: //change timer
+                textlcdmode(1, "TIMER"); textlcdmode(2,"        ");
+                switch(timertoggle){
+                    case 0://timer 30s
+                        textlcdmode(2, "30 sec");
+                        fndmode(c, 30);
+                        timertoggle++;
+                        break;
+                    case 1://timer 60s
+                        textlcdmode(2, "60 sec");
+                        fndmode(c, 60); 
+                        timertoggle++;
+                        break;
+                    default://timer 120s
+                        textlcdmode(2, "120 sec");
+                        fndmode(c, 120);
+                        timertoggle=0;
+                        break;
+                }
                 ledOn(ledFd, 0x0F);
                 pwmSetPercentRGB(50,0);
                 pwmSetPercentRGB(0,1);
@@ -99,7 +117,7 @@ int main(int argc , char **argv)
 
             default:
                 fndmode(s, 0);
-                textlcdmode(1, "case_default")
+                textlcdmode(1, "case_default"); textlcdmode(2,"        ");
                 ledOn(ledFd, 0x00);
                 write(buzzerEnableFd, &"0", 1);
                 pwmSetPercentRGB(0,0);
