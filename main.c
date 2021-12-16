@@ -44,7 +44,7 @@ int main(int argc , char **argv)
     pwmSetPercentRGB(0,0);
     pwmSetPercentRGB(0,1);
     pwmSetPercentRGB(0,2);
-    pwmSetWave(50);
+    pwmSetWave(50);// 50주기로 rgb를 차례대로 서서히 onoff
 
     //msg받아오고 실패시 리턴
     int msgQueue = msgget(MESSAGE_ID, IPC_CREAT | 0666);
@@ -77,7 +77,7 @@ int main(int argc , char **argv)
                 pwmSetPercentRGB(50,1);
                 pwmSetPercentRGB(50,2);
                 buzzerPlaySong(buzzerFd, buzzerEnableFd, 1);
-                for(int i=0;i<0xFFFFFF;i++)
+                for(int i=0;i<0xFFFFFF;i++)//버저 플레이 시간 증가
                 {}
                 break;
 
@@ -88,7 +88,7 @@ int main(int argc , char **argv)
                 pwmSetPercentRGB(0,1);
                 pwmSetPercentRGB(50,2);
                 buzzerPlaySong(buzzerFd, buzzerEnableFd, 8);
-                for(int i=0;i<0xFFFFFF;i++)
+                for(int i=0;i<0xFFFFFF;i++)//버저 플레이 시간 증가
                 {}
                 break;
 
