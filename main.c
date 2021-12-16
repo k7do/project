@@ -36,7 +36,7 @@ int main(int argc , char **argv)
 
     //사용 변수 선언
     int ledFd, buzzerFd, buzzerEnableFd;
-    BUTTON_MSG_T rxMsg;
+    BUTTON_MSG_T rxMsg, ledFd_temp,textlcd_temp;
     pthread_t buttonTh_id;
 
     //각 드라이버 init
@@ -45,6 +45,8 @@ int main(int argc , char **argv)
     buttonInit(&buttonTh_id);
     pwmLedInit();
     textlcdinit();
+    
+    ledFd_temp = ledFd;
 
     //RGB percent 0으로 보여주고 50퍼센트로 보여주기
     pwmSetPercentRGB(0,0);
@@ -97,23 +99,29 @@ int main(int argc , char **argv)
                         timercount=30;//추후 사용할때fndmode(c, 30);로 아마도 스레드 미사용시 카운트만 하는걸로 예상
                         timertoggle++;//모드 순차적 변경
                         ledOn(ledFd, 0x11);//의미없는 타이머모드 시간 차별성
+                        pwmSetPercentRGB(30,0);
+                        pwmSetPercentRGB(30,1);
+                        pwmSetPercentRGB(30,2);
                         break;
                     case 1://timer 60s
                         textlcdmode(2, "60 sec");
                         timercount=60;//추후 사용할때fndmode(c, 60);로 아마도 스레드 미사용시 카운트만 하는걸로 예상
                         timertoggle++;//모드 순차적 변경
                         ledOn(ledFd, 0x12);//의미없는 타이머모드 시간 차별성
+                        pwmSetPercentRGB(60,0);
+                        pwmSetPercentRGB(60,1);
+                        pwmSetPercentRGB(60,2);
                         break;
                     default://timer 120s
                         textlcdmode(2, "120 sec");
                         timercount=120;//추후 사용할때fndmode(c, 120);로 아마도 스레드 미사용시 카운트만 하는걸로 예상
                         timertoggle=0;//모드 순차적 변경
                         ledOn(ledFd, 0x13);//의미없는 타이머모드 시간 차별성
+                        pwmSetPercentRGB(90,0);
+                        pwmSetPercentRGB(90,1);
+                        pwmSetPercentRGB(90,2);
                         break;
                 }
-                pwmSetPercentRGB(50,0);
-                pwmSetPercentRGB(0,1);
-                pwmSetPercentRGB(50,2);
                 buzzerPlaySong(buzzerFd, buzzerEnableFd, 2);
                 for(int i=0;i<0x100000;i++)//버저 플레이 시간 증가
                 {}
@@ -127,11 +135,10 @@ int main(int argc , char **argv)
                 {
                     textlcdmode(2,"  OFF   ");
                     buzzertoggle=0;// 반대로 끈다
-                    
-                    buzzerInit(0);
-                    //아예 exit하면 토클할때 또 스레드 생성하면 할 것 같은데 아예 토글할때 플레이하는 주소를 바꿔버리도
-                    //작동안하지 않을까 해서 넣어봤어요 반대로 작동하는 토글로 넘어가면 변수에 알맞게 다시 바꾸면 가능하지 않을까해요
-                    //이 코드가 아니라면 바꿔주세요..
+                    write(buzzerEnableFd, &"0", 1); //buzzerInit(0);
+                    pwmSetPercentRGB(0,0);
+                    pwmSetPercentRGB(0,1);
+                    pwmSetPercentRGB(0,2);
                 }
                 else{
                     textlcdmode(2,"  ON    ");
@@ -143,18 +150,33 @@ int main(int argc , char **argv)
                         for(int i=0;i<0x100000;i++)//버저 플레이 시간 증가
                             {}
                     }
+                    pwmSetPercentRGB(50,0);
+                    pwmSetPercentRGB(50,1);
+                    pwmSetPercentRGB(50,2);
                 }
                 break;
 
             case 139: //led on/off
                 textlcdmode(1, "LED_ON/OFF");
                 textlcdmode(2,"        ");// textlcd 첫번째 라인에 reset표기
-                /*
-                    led onoff code
-                */
-                pwmSetPercentRGB(0,0);
-                pwmSetPercentRGB(0,1);//pwmSetPercentRGB(50,1);
-                pwmSetPercentRGB(0,2);//pwmSetPercentRGB(50,2);
+                if(ledtoggle ==1 )//led,colorled on->off
+                {
+                    ledtoggle=0;
+                    pwmInactiveAll();//colorled off
+                    ledFd = 0;//ledExit()와 같은 기능?
+                    pwmSetPercentRGB(0,0);
+                    pwmSetPercentRGB(0,1);
+                    pwmSetPercentRGB(0,2);
+                }
+                else//led,colorled off->on
+                {
+                    ledtoggle =1;
+                    pwmActiveAll();
+                    ledFd = ledFd_temp;
+                    pwmSetPercentRGB(50,0);
+                    pwmSetPercentRGB(50,1);
+                    pwmSetPercentRGB(50,2);
+                }
                 buzzerPlaySong(buzzerFd, buzzerEnableFd, 1);
                 for(int i=0;i<0x1FFFFF;i++)//버저 플레이 시간 증가
                 {}
@@ -163,13 +185,22 @@ int main(int argc , char **argv)
             case 115: //fnd on/off
                 textlcdmode(1, "FND_ON/OFF");
                 textlcdmode(2,"        ");// textlcd 첫번째 라인에 reset표기
-                //ledOn(ledFd, 0xFF);
-                /*
-                    onoff code
-                */
-                pwmSetPercentRGB(0,0);
-                pwmSetPercentRGB(0,1);//pwmSetPercentRGB(50,1);
-                pwmSetPercentRGB(0,2);//pwmSetPercentRGB(50,2);
+                if(fndtoggle==1)
+                {
+                    fndtoggle=0;
+                    fndonoff=0;
+                    pwmSetPercentRGB(0,0);
+                    pwmSetPercentRGB(0,1);
+                    pwmSetPercentRGB(0,2);
+                }
+                else
+                {
+                    fndtoggle=1;
+                    fndonoff=1;
+                    pwmSetPercentRGB(50,0);
+                    pwmSetPercentRGB(50,1);
+                    pwmSetPercentRGB(50,2);
+                }
                 buzzerPlaySong(buzzerFd, buzzerEnableFd, 1);
                 for(int i=0;i<0x1FFFFF;i++)//버저 플레이 시간 증가
                 {}
@@ -177,16 +208,26 @@ int main(int argc , char **argv)
 
 
             default: //114값 해당, textlcd on/off
-                textlcdmode(1, "FND_ON/OFF");
+                textlcdmode(1, "TEXTLCD_ON/OFF");
                 textlcdmode(2,"        ");
                 //ledOn(ledFd, 0x00);
-                 /*
-                    onoff code
-                */
-                write(buzzerEnableFd, &"0", 1);
-                pwmSetPercentRGB(0,0);
-                pwmSetPercentRGB(0,1);
-                pwmSetPercentRGB(0,2);
+                if(textlcdtoggle==1)
+                {
+                    textlcdtoggle =0;
+                    textlcdexit();
+                    pwmSetPercentRGB(0,0);
+                    pwmSetPercentRGB(0,1);
+                    pwmSetPercentRGB(0,2);
+                }
+                else
+                {
+                    textlcdtoggle =1;
+                    textlcdinit();
+                    pwmSetPercentRGB(50,0);
+                    pwmSetPercentRGB(50,1);
+                    pwmSetPercentRGB(50,2);
+                }
+                //
                 break;
         }
 
