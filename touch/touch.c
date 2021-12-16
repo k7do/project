@@ -18,13 +18,12 @@
 int readSize;
 static int fd = 0;
 static struct input_event stEvent;
-int threadIndex = 0;
+int T_threadIndex = 0;
 TOUCH_MSG_T txMsg;
-char inputDevPath[200] = {
+char T_inputDevPath[200] = {
     0,
 };
-int msgID;
-pthread_t touchTh_id;
+int T_msgID;
 pthread_mutex_t lock;
 
 int probetouchPath(char *newPath)
@@ -94,21 +93,20 @@ void *touchThFunc(void *arg)
 
         else if ((stEvent.type == EV_KEY ) && (stEvent.code == BTN_TOUCH) )
         {
+            txMsg.messageNum = 200;
             txMsg.x = x;
             txMsg.y = y;
             if(stEvent.value == 0)
             {
                 txMsg.pressed = 0;
-                printf("touch finished\r\n");
             }
 
             else if(stEvent.value == 1)
             {
                 txMsg.pressed = 1;
-                printf("New touch\r\n");
             }
 
-            msgsnd(msgID, &txMsg, sizeof(TOUCH_MSG_T) - sizeof(long int), 0);
+            msgsnd(T_msgID, &txMsg, sizeof(TOUCH_MSG_T) - sizeof(long int), 0);
         }
         /*
         if (readSize != sizeof(stEvent))
@@ -122,7 +120,7 @@ void *touchThFunc(void *arg)
             txMsg.keyInput = stEvent.code;
             txMsg.pressed = stEvent.value;
 
-            msgsnd(msgID, &txMsg, sizeof(touch_MSG_T), 0);
+            msgsnd(T_msgID, &txMsg, sizeof(touch_MSG_T), 0);
         }
         //msgsnd(msgQueue, &messageTxData, sizeof(messageTxData.piggyBack), 0);
         */
@@ -135,25 +133,25 @@ void *touchThFunc(void *arg)
     return NULL;
 }
 
-void touchInit(void) // 작성 할 것
+void touchInit(pthread_t *touchTh_id) // 작성 할 것
 {
-    if (probetouchPath(inputDevPath) == 0)
+    if (probetouchPath(T_inputDevPath) == 0)
     {
         printf("ERROR! File Not Found!\r\n");
         printf("Did you insmod?\r\n");
     }
 
-    printf("inputDevPath: %s\r\n", inputDevPath);
+    printf("T_inputDevPath: %s\r\n", T_inputDevPath);
 
     txMsg.messageNum = 0;
 
-    fd = open(inputDevPath, O_RDONLY);
+    fd = open(T_inputDevPath, O_RDONLY);
     if (fd == -1)
         printf("file open error\r\n");
 
-    msgID = msgget(MESSAGE_ID, IPC_CREAT | 0666);
+    T_msgID = msgget(T_MESSAGE_ID, IPC_CREAT | 0666);
 
-    if (msgID == -1)
+    if (T_msgID == -1)
     {
         printf("Cannot get msgQueueID, Return!\r\n");
     }
@@ -163,7 +161,7 @@ void touchInit(void) // 작성 할 것
         printf("\n Mutex Init Failed !!\n");
     }
 
-    pthread_create(&touchTh_id, NULL, &touchThFunc, NULL);
+    pthread_create(touchTh_id, NULL, &touchThFunc, NULL);
 
 }
 

@@ -3,7 +3,7 @@
 
 int textlcdinit(void);
 void textlcdexit();
-int textlcdmode(int argc , char **argv);
+int textlcdmode(unsigned int linenumber , char string[]);
 
 #define LINE_NUM			2
 #define COLUMN_NUM			16	
@@ -45,3 +45,4 @@ typedef struct TextLCD_tag
 }stTextLCD,*pStTextLCD;
 
 #endif//  __TEXTLCD_DRV_H__
+

@@ -1,4 +1,4 @@
-objects = button.o buzzer.o colorled.o fnd.o led.o temperature.o textlcd.o accelMagGyro.o
+objects = button.o buzzer.o colorled.o fnd.o led.o temperature.o textlcd.o accelMagGyro.o touch.o libbmp.o libfbdev.o
 
 all: main.elf
 	scp main.elf ecube@192.168.0.29:/home/ecube/kootest

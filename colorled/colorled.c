@@ -148,6 +148,21 @@ int pwmStartAll(void)
     return 1;
 }
 
+int pwmStopAll(void)
+{
+    int fd = 0;
+    fd = open ( COLOR_LED_DEV_R_ PWM_ENABLE, O_WRONLY);
+    write(fd,&"0",1);
+    close(fd);
+    fd = open ( COLOR_LED_DEV_G_ PWM_ENABLE, O_WRONLY);
+    write(fd,&"0",1);
+    close(fd);
+    fd = open ( COLOR_LED_DEV_B_ PWM_ENABLE, O_WRONLY);
+    write(fd,&"0",1);
+    close(fd);
+    return 1;
+}
+
 int pwmLedInit(void)
 {   //Initialize
     pwmActiveAll();

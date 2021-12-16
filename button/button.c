@@ -9,53 +9,44 @@
 #include <pthread.h>
 #include "button.h"
 // first read input device
-#define INPUT_DEVICE_LIST "/dev/input/event"
-#define PROBE_FILE "/proc/bus/input/devices"
-#define HAVE_TO_FIND_1 "N: Name=\"ecube-button\"\n"
-#define HAVE_TO_FIND_2 "H: Handlers=kbd event"
+#define B_INPUT_DEVICE_LIST "/dev/input/event"
+#define B_PROBE_FILE "/proc/bus/input/devices"
+#define B_HAVE_TO_FIND_1 "N: Name=\"ecube-button\"\n"
+#define B_HAVE_TO_FIND_2 "H: Handlers=kbd event"
 #define MUTEX_ENABLE 0
 
-int readSize;
-static int fd = 0;
-static struct input_event stEvent;
-int threadIndex = 0;
-BUTTON_MSG_T txMsg;
-char inputDevPath[200] = {
+int B_readSize;
+static int B_fd = 0;
+static struct input_event B_stEvent;
+int B_threadIndex = 0;
+BUTTON_MSG_T B_txMsg;
+char B_inputDevPath[200] = {
     0,
 };
-int msgID;
+int B_msgID;
 pthread_mutex_t lock;
 
 void *buttonThFunc(void *arg)
 {
-#if MUTEX_ENABLE               // mutex을 사용했을 경우
-    pthread_mutex_lock(&lock); // è lock으로 다른 스레드의 동시 수행 차단
-#endif
 
     while (1)
     {
-        readSize = read(fd, &stEvent, sizeof(stEvent));
-        if (readSize != sizeof(stEvent))
+        B_readSize = read(B_fd, &B_stEvent, sizeof(B_stEvent));
+        if (B_readSize != sizeof(B_stEvent))
         {
             continue;
         }
 
-        if (stEvent.type == EV_KEY)
+        if (B_stEvent.type == EV_KEY)
         {
-            txMsg.keyInput = stEvent.code;
-            txMsg.pressed = stEvent.value;
-            msgsnd(msgID, &txMsg, sizeof(BUTTON_MSG_T), 0);
-            if(txMsg.keyInput == 114 && txMsg.pressed == 0)
-            {
-                break;
-            }
+            B_txMsg.MessageNum = 199;
+            B_txMsg.keyInput = B_stEvent.code;
+            B_txMsg.pressed = B_stEvent.value;
+            msgsnd(B_msgID, &B_txMsg, sizeof(BUTTON_MSG_T) - sizeof(long int), 0);
         }
         //msgsnd(msgQueue, &messageTxData, sizeof(messageTxData.piggyBack), 0);
     }
-
-#if MUTEX_ENABLE
-    pthread_mutex_unlock(&lock); // 다른 스레드가 수행할수 있도록 lock 해제
-#endif
+    
 
     return NULL;
 }
@@ -63,31 +54,25 @@ void *buttonThFunc(void *arg)
 int buttonInit(pthread_t* buttonTh_id) // 작성 할 것
 {
 
-    if (probeButtonPath(inputDevPath) == 0)
+    if (probeButtonPath(B_inputDevPath) == 0)
     {
         printf("ERROR! File Not Found!\r\n");
         printf("Did you insmod?\r\n");
         return 0;
     }
 
-    printf("inputDevPath: %s\r\n", inputDevPath);
+    printf("B_inputDevPath: %s\r\n", B_inputDevPath);
 
-    fd = open(inputDevPath, O_RDONLY);
-    if (fd == -1)
+    B_fd = open(B_inputDevPath, O_RDONLY);
+    if (B_fd == -1)
         printf("file open error\r\n");
 
-    msgID = msgget(MESSAGE_ID, IPC_CREAT | 0666);
+    B_msgID = msgget(B_MESSAGE_ID, IPC_CREAT | 0666);
 
-    if (msgID == -1)
+    if (B_msgID == -1)
     {
         printf("Cannot get msgQueueID, Return!\r\n");
         return -1;
-    }
-
-    if (pthread_mutex_init(&lock, NULL) != 0)
-    {
-        printf("\n Mutex Init Failed !!\n");
-        return 1;
     }
 
     pthread_create(buttonTh_id, NULL, &buttonThFunc, NULL);
@@ -104,20 +89,20 @@ int probeButtonPath(char *newPath)
 {
     int returnValue = 0;                //button에 해당하는 event#을 찾았나?
     int number = 0;                     //찾았다면 여기에 집어넣자
-    FILE *fp = fopen(PROBE_FILE, "rt"); //파일을 열고
+    FILE *fp = fopen(B_PROBE_FILE, "rt"); //파일을 열고
 
     while (!feof(fp)) //끝까지 읽어들인다.
     {
         char tmpStr[200];       //200자를 읽을 수 있게 버퍼
         fgets(tmpStr, 200, fp); //최대 200자를 읽어봄
         //printf ("%s",tmpStr);
-        if (strcmp(tmpStr, HAVE_TO_FIND_1) == 0)
+        if (strcmp(tmpStr, B_HAVE_TO_FIND_1) == 0)
         {
             printf("YES! I found!: %s\r\n", tmpStr);
             returnValue = 1; //찾음
         }
 
-        if ((returnValue == 1) && (strncasecmp(tmpStr, HAVE_TO_FIND_2, strlen(HAVE_TO_FIND_2)) == 0))
+        if ((returnValue == 1) && (strncasecmp(tmpStr, B_HAVE_TO_FIND_2, strlen(B_HAVE_TO_FIND_2)) == 0))
         {
             printf("-->%s", tmpStr);
             printf("\t%c\r\n", tmpStr[strlen(tmpStr) - 3]);
@@ -130,7 +115,7 @@ int probeButtonPath(char *newPath)
     fclose(fp);
 
     if (returnValue == 1)
-        sprintf(newPath, "%s%d", INPUT_DEVICE_LIST, number);
+        sprintf(newPath, "%s%d", B_INPUT_DEVICE_LIST, number);
 
     return returnValue;
 }

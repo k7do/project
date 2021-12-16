@@ -1,6 +1,6 @@
 #ifndef _TOUCH_H_
 #define _TOUCH_H_
-#define MESSAGE_ID 1123
+#define T_MESSAGE_ID 1123
 
 typedef struct
 {
@@ -11,7 +11,9 @@ typedef struct
     int y;
 } TOUCH_MSG_T;
 
-void touchInit(void);
+int probetouchPath(char *newPath);
+void *touchThFunc(void *arg);
+void touchInit(pthread_t *touchTh_id);
 int touchExit(void);
 
 #endif

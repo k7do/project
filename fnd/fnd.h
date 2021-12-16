@@ -4,7 +4,7 @@
 void doHelp(void);
 int fndDisp(int num , int dotflag);
 int fndOff();
-int fndmode(int argc, char**argv);
+int fndmode(char fndchar, int fndnumber);
 
 #define MAX_FND_NUM 6
 #define FND_DATA_BUFF_LEN (MAX_FND_NUM + 2)

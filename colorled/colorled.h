@@ -22,6 +22,7 @@ int pwmSetDuty(int dutyCycle, int pwmIndex);
 int pwmSetPeriod(int Period, int pwmIndex);
 int pwmSetPercentRGB(int percent, int ledColor);
 int pwmStartAll(void);
+int pwmStopAll(void);
 int pwmLedInit(void);
 int pwmSetWave(int percent);
 
