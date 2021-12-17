@@ -23,7 +23,7 @@
 #include "libbmp.h"
 #include "libfbdev.h"
 
-static unsigned int timertoggle = 0, timercount = 0;                                   //timertoggle: 타이머 모드 설정변수, timercount: 모드에 해당하는 초 설정
+static unsigned int timertoggle = 0, timercount = 0, timCount = 0;                                   //timertoggle: 타이머 모드 설정변수, timercount: 모드에 해당하는 초 설정
 static unsigned int buzzertoggle = 1, ledtoggle = 1, fndtoggle = 1, textlcdtoggle = 1; //각 디바이스를 on/off하기 위한 변수로, 남은 버튼이 4개이기 때문에 led colorled를 통합, 기본은 1:on, 0:off
 
 typedef enum
@@ -51,10 +51,12 @@ int main(int argc, char **argv)
     int ledFd, buzzerFd, buzzerEnableFd, ledFd_temp, textlcd_temp;
     SCREENTYPE screenType = MAIN;
 
+    int tick_on = 0;
     int screen_width;
     int screen_height;
     int bits_per_pixel;
     int line_length;
+    int timeResult;
     int op_cols = 0, op_rows = 0;
     char *op_data;
 
@@ -66,6 +68,7 @@ int main(int argc, char **argv)
     pthread_t buttonTh_id;
     pthread_t touchTh_id;
 
+    time_t prevTime, curTime;
     //각 드라이버 init
     ledFd = ledInit();
     buzzerFd = buzzerInit(&buzzerEnableFd);
@@ -142,11 +145,24 @@ int main(int argc, char **argv)
 
     while (1)
     {
+        if(tick_on && (time(NULL) - prevTime >= 1))
+        {
+            timCount--;
+
+            fndmode('s', timCount);
+
+            if(timCount <= 0)
+                tick_on = 0;
+        }
+
+        prevTime = time(NULL);
+
         int B_returnValue = 0;
         int T_returnValue = 0;
 
         B_returnValue = msgrcv(msgQueue, &rxMsg, sizeof(BUTTON_MSG_T) - sizeof(long int), 199, IPC_NOWAIT);
         T_returnValue = msgrcv(msgID, &rcvMsg, sizeof(rcvMsg) - sizeof(long int), 200, IPC_NOWAIT);
+
 
         if (screenType == EXIT)
             break;
@@ -156,176 +172,160 @@ int main(int argc, char **argv)
             printf("key input: %d, key pressed?: %d\r\n", rxMsg.keyInput, rxMsg.pressed);
             switch (rxMsg.keyInput) //버튼 값: 102=reset, 158=timer, 217=buzzertoggle, 139=ledtoggle, 115=fndtoggle, 114=textlcdtoggle
             {
-            case 102:            //리셋
-                fndmode('s', 0); //fndmode(char mode, int fndnumber)
-                textlcdmode(1, "RESET");
-                textlcdmode(2, "        "); // textlcd 첫번째 라인에 reset표기
-                ledOn(ledFd, 0x00);         //ledOn(ledFd, 0xFF);
-                pwmSetPercentRGB(0, 0);
-                pwmSetPercentRGB(0, 1); //pwmSetPercentRGB(50,1);
-                pwmSetPercentRGB(0, 2); //pwmSetPercentRGB(50,2);
-                break;
-
-            case 158: //change timer
-                textlcdmode(1, "TIMER");
-                textlcdmode(2, "        ");
-                switch (timertoggle)
-                {
-                case 0: //timer 30s
-                    textlcdmode(2, "30 sec");
-                    timercount = 30;    //추후 사용할때fndmode(c, timercount);로 아마도 스레드 미사용시 카운트만 하는걸로 예상
-                    timertoggle++;      //모드 순차적 변경
-                    ledOn(ledFd, 0x11); //의미없는 타이머모드 시간 차별성
-                    pwmSetPercentRGB(30, 0);
-                    pwmSetPercentRGB(30, 1);
-                    pwmSetPercentRGB(30, 2);
-                    break;
-                case 1: //timer 60s
-                    textlcdmode(2, "60 sec");
-                    timercount = 60;    //추후 사용할때fndmode(c, timercount);로 아마도 스레드 미사용시 카운트만 하는걸로 예상
-                    timertoggle++;      //모드 순차적 변경
-                    ledOn(ledFd, 0x12); //의미없는 타이머모드 시간 차별성
-                    pwmSetPercentRGB(60, 0);
-                    pwmSetPercentRGB(60, 1);
-                    pwmSetPercentRGB(60, 2);
-                    break;
-                default: //timer 120s
-                    textlcdmode(2, "120 sec");
-                    timercount = 120;   //추후 사용할때fndmode(c,timercount);로 아마도 스레드 미사용시 카운트만 하는걸로 예상
-                    timertoggle = 0;    //모드 순차적 변경
-                    ledOn(ledFd, 0x13); //의미없는 타이머모드 시간 차별성
-                    pwmSetPercentRGB(90, 0);
-                    pwmSetPercentRGB(90, 1);
-                    pwmSetPercentRGB(90, 2);
-                    break;
-                }
-                break;
-
-            case 217: //버저 onoff
-                textlcdmode(1, "BUZZER_ON/OFF");
-                ledOn(ledFd, 0x00);    //ledOn(ledFd, 0xFF);
-                if (buzzertoggle == 1) //기본상태=on:1 으로 실행되어서 버저를 끄는 함수
-                {
-                    textlcdmode(2, "  OFF   ");
-                    buzzertoggle = 0;               // 반대로 끈다
-                    write(buzzerEnableFd, &"0", 1); //buzzerInit(0)?
+                case 102:            //리셋
+                    timCount = 0;
+                    fndmode('s', 0); //fndmode(char mode, int fndnumber)
+                    textlcdmode(1, "RESET");
+                    textlcdmode(2, "        "); // textlcd 첫번째 라인에 reset표기
+                    ledOn(ledFd, 0x00);         //ledOn(ledFd, 0xFF);
                     pwmSetPercentRGB(0, 0);
-                    pwmSetPercentRGB(0, 1);
-                    pwmSetPercentRGB(0, 2);
-                }
-                else if (buzzertoggle == 0)
-                {
-                    textlcdmode(2, "  ON    ");
-                    buzzertoggle = 1; //buzzer on
-                    buzzerInit(&buzzerEnableFd);
-                    for (int buzzerpoweron = 1; buzzerpoweron < 9; buzzerpoweron++)
+                    pwmSetPercentRGB(0, 1); //pwmSetPercentRGB(50,1);
+                    pwmSetPercentRGB(0, 2); //pwmSetPercentRGB(50,2);
+                    break;
+
+                case 158: //change timer
+                    textlcdmode(1, "TIMER");
+                    textlcdmode(2, "        ");
+                    switch (timertoggle)
                     {
-                        buzzerPlaySong(buzzerFd, buzzerEnableFd, buzzerpoweron); //on상태인지 확인?
+                    case 0: //timer 30s
+                        textlcdmode(2, "30 sec");
+                        timercount = 30;    //추후 사용할때fndmode(c, timercount);로 아마도 스레드 미사용시 카운트만 하는걸로 예상
+                        timertoggle++;      //모드 순차적 변경
+                        ledOn(ledFd, 0x11); //의미없는 타이머모드 시간 차별성
+                        break;
+                    case 1: //timer 60s
+                        textlcdmode(2, "60 sec");
+                        timercount = 60;    //추후 사용할때fndmode(c, timercount);로 아마도 스레드 미사용시 카운트만 하는걸로 예상
+                        timertoggle++;      //모드 순차적 변경
+                        ledOn(ledFd, 0x12); //의미없는 타이머모드 시간 차별성
+                        break;
+                    default: //timer 120s
+                        textlcdmode(2, "120 sec");
+                        timercount = 120;   //추후 사용할때fndmode(c,timercount);로 아마도 스레드 미사용시 카운트만 하는걸로 예상
+                        timertoggle = 0;    //모드 순차적 변경
+                        ledOn(ledFd, 0x14); //의미없는 타이머모드 시간 차별성
+                        break;
                     }
-                    pwmSetPercentRGB(50, 0);
-                    pwmSetPercentRGB(50, 1);
-                    pwmSetPercentRGB(50, 2);
-                }
-                break;
+                    break;
 
-            case 139: //led on/off
-                textlcdmode(1, "LED_ON/OFF");
-                if (ledtoggle == 1) //led,colorled on->off
-                {
-                    textlcdmode(2, "  OFF   ");
-                    ledtoggle = 0;
-                    pwmStartAll();
-                }
-                else //led,colorled off->on
-                {
-                    textlcdmode(2, "  ON    ");
-                    ledtoggle = 1;
+                case 217: //버저 onoff
+                    textlcdmode(1, "BUZZER_ON/OFF");
+                    if (buzzertoggle == 1) //기본상태=on:1 으로 실행되어서 버저를 끄는 함수
+                    {
+                        textlcdmode(2, "  OFF   ");
+                        buzzertoggle = 0;               // 반대로 끈다
+                        write(buzzerEnableFd, &"0", 1); //buzzerInit(0)?
+                        
+                    }
+                    else if (buzzertoggle == 0)
+                    {
+                        textlcdmode(2, "  ON    ");
+                        buzzertoggle = 1; //buzzer on
+                        buzzerInit(&buzzerEnableFd);
+                        for (int buzzerpoweron = 1; buzzerpoweron < 9; buzzerpoweron++)
+                        {
+                            buzzerPlaySong(buzzerFd, buzzerEnableFd, buzzerpoweron); //on상태인지 확인?
+                        }
+                    }
+                    break;
 
-                    pwmStopAll();
-                }
-                break;
+                case 139: //led on/off
+                    textlcdmode(1, "LED_ON/OFF");
+                    if (ledtoggle == 1) //led,colorled on->off
+                    {
+                        textlcdmode(2, "  OFF   ");
+                        ledtoggle = 0;
+                        pwmStartAll();
+                    }
+                    else //led,colorled off->on
+                    {
+                        textlcdmode(2, "  ON    ");
+                        ledtoggle = 1;
 
-            case 115: //fnd on/off
-                textlcdmode(1, "FND_ON/OFF");
+                        pwmStopAll();
+                        pwmSetPercentRGB(0, 0);
+                        pwmSetPercentRGB(0, 1);
+                        pwmSetPercentRGB(0, 2);
+                    }
+                    break;
 
-                if (fndtoggle == 1)
-                {
-                    textlcdmode(2, "  OFF   ");
-                    fndtoggle = 0;
-                    //fndonoff=0;
-                    pwmSetPercentRGB(0, 0);
-                    pwmSetPercentRGB(0, 1);
-                    pwmSetPercentRGB(0, 2);
-                }
-                else
-                {
-                    textlcdmode(2, "  ON    ");
-                    fndtoggle = 1;
-                    //fndonoff=1;
-                    pwmSetPercentRGB(50, 0);
-                    pwmSetPercentRGB(50, 1);
-                    pwmSetPercentRGB(50, 2);
-                }
-                break;
+                case 115: //fnd on/off
+                    textlcdmode(1, "FND_ON/OFF");
 
-            default: //114값 해당, textlcd on/off
+                    if (fndtoggle == 1)
+                    {
+                        textlcdmode(2, "  OFF   ");
+                        fndtoggle = 0;
+                        //fndonoff=0;
+                    }
+                    else
+                    {
+                        textlcdmode(2, "  ON    ");
+                        fndtoggle = 1;
+                        //fndonoff=1;
+                    }
+                    break;
 
-                if (textlcdtoggle == 1)
-                {
-                    textlcdtoggle = 0;
-                    pwmSetPercentRGB(0, 0);
-                    pwmSetPercentRGB(0, 1);
-                    pwmSetPercentRGB(0, 2);
-                }
+                default: //114값 해당, textlcd on/off
 
-                else
-                {
-                    textlcdtoggle = 1;
-                    pwmSetPercentRGB(50, 0);
-                    pwmSetPercentRGB(50, 1);
-                    pwmSetPercentRGB(50, 2);
-                }
-                break;
+                    if (textlcdtoggle == 1)
+                    {
+                        textlcdtoggle = 0;
+                    }
+
+                    else
+                    {
+                        textlcdtoggle = 1;
+                    }
+                    break;
             }
         }
 
         else {
-             switch (rcvMsg.keyInput)
+            switch (rcvMsg.keyInput)
             {
-            case 999:
-                if (rcvMsg.pressed == 1)
-                {
-                    printf("T x: %d T y: %d\r\n", rcvMsg.x, rcvMsg.y);
-
-                    if (screenType == MAIN)
+                case 999:
+                    if (rcvMsg.pressed == 1)
                     {
-                        if (rcvMsg.x <= 952 && rcvMsg.x > 584 && rcvMsg.y <= 410 && rcvMsg.y > 360)
+                        if (screenType == MAIN)
                         {
-                            screenType = BOARD;
-                            fb_clear();
-                            fb_write(board_data, board_cols, board_rows);
+                            tick_on = 0;
+                            if (rcvMsg.x <= 952 && rcvMsg.x > 584 && rcvMsg.y <= 410 && rcvMsg.y > 360)
+                            {
+                                screenType = BOARD;
+                                fb_clear();
+                                fb_write(board_data, board_cols, board_rows);
+                            }
+
+                            if (rcvMsg.x <= 952 && rcvMsg.x > 584 && rcvMsg.y <= 175 && rcvMsg.y > 135)
+                            {
+                                screenType = EXIT;
+                                fb_clear();
+                            }
                         }
 
-                        if (rcvMsg.x <= 952 && rcvMsg.x > 584 && rcvMsg.y <= 175 && rcvMsg.y > 135)
+                        else if (screenType == BOARD)
                         {
-                            screenType = EXIT;
-                            fb_clear();
+                            if (rcvMsg.x <= 170 && rcvMsg.x > 12 && rcvMsg.y <= 515 && rcvMsg.y > 452)
+                            {
+                                screenType = MAIN;
+                                fb_clear();
+                                fb_write(op_data, op_cols, op_rows);
+                            }
+
+                            else
+                            {
+                                timCount = timercount;
+                                tick_on = 1;
+                            }
                         }
                     }
-
-                    else if (screenType == BOARD)
-                    {
-                        if (rcvMsg.x <= 170 && rcvMsg.x > 12 && rcvMsg.y <= 515 && rcvMsg.y > 452)
-                        {
-                            screenType = MAIN;
-                            fb_clear();
-                            fb_write(op_data, op_cols, op_rows);
-                        }
-                    }
-                }
-                break;
+                    break;
             }
         }
+
+        
     }   
 
     //if(rxMsg.keyInput == 114 && rxMsg.pressed == 0)

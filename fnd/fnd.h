@@ -1,7 +1,7 @@
 #ifndef __FND_DRV_H__
 #define __FND_DRV_H__
 
-void doHelp(void);
+void *fndThFunc(void *arg);
 int fndDisp(int num , int dotflag);
 int fndOff();
 int fndmode(char fndchar, int fndnumber);

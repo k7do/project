@@ -9,7 +9,9 @@
 #include <time.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <pthread.h>
 #include "fnd.h"
+
 
 #define FND_DRIVER_NAME		"/dev/perifnd"
 #define MODE_STATIC_DIS		0
@@ -18,6 +20,7 @@
 
 static	int mode, fndonoff=1;
 static	int number,counter;
+
 /*
 void doHelp(void)
 {
@@ -33,7 +36,6 @@ void doHelp(void)
 	printf("ex) fndtest 0		;display off \n");
 }
 */
-
  
 //int fndmode(int argc, char**argv)
 //프로적트에서는
@@ -89,6 +91,8 @@ int fndmode(char fndchar, int fndnumber)
 		}
 		number = atoi(argv[2]);*/
 		number = fndnumber;
+
+        
 	}
 
 	else if(fndchar == 'o')//else if (argv[1][0] == 'o' )
@@ -134,7 +138,7 @@ int fndmode(char fndchar, int fndnumber)
 				break;
 			counter--;
 			sleep(1);
-			if (counter <= 0 )
+			if (counter < 0 )
 				break;
 		}
 	}
